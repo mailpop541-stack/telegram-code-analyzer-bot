@@ -36,6 +36,24 @@ log = logging.getLogger("analyzer")
 load_dotenv()  # .env file se keys padhta hai
 
 TG_TOKEN = os.environ["TELEGRAM_BOT_TOKEN"]
+
+
+class TelegramTokenRedactionFilter(logging.Filter):
+    def filter(self, record):
+        try:
+            record.msg = record.getMessage().replace(TG_TOKEN, "[REDACTED]")
+            record.args = ()
+        except Exception:
+            pass
+        return True
+
+
+redactor = TelegramTokenRedactionFilter()
+for handler in logging.getLogger().handlers:
+    handler.addFilter(redactor)
+logging.getLogger("httpx").setLevel(logging.WARNING)
+logging.getLogger("httpcore").setLevel(logging.WARNING)
+
 # Optional: sirf in Telegram user IDs ko allow karo (comma separated). Khali = sab allowed.
 ALLOWED_IDS = {int(x) for x in os.getenv("ALLOWED_USER_IDS", "").split(",") if x.strip()}
 MODEL = os.getenv("CLAUDE_MODEL", "claude-sonnet-5-5")
