@@ -22,6 +22,15 @@ aur security ke hisaab se safe hai ya nahi. Bheja gaya code kabhi RUN nahi hota.
 Railway / Render / VPS par deploy karo. Keys ko hamesha "Environment Variables" me daalo,
 code ya GitHub me nahi.
 
+### Render Web Service
+- Build command: `pip install -r requirements.txt`
+- Start command: `python bot.py`
+- Health check path: `/health`
+- `TELEGRAM_BOT_TOKEN`, `ANTHROPIC_API_KEY`, aur `ALLOWED_USER_IDS` ko Render ke Environment settings me set karo.
+
+### UptimeRobot
+Ek HTTP(s) monitor banao jo Render ke URL ke end me `/health` lagakar check kare, jaise `https://<service>.onrender.com/health`.
+
 ## Settings (.env)
 - TELEGRAM_BOT_TOKEN : zaroori
 - ANTHROPIC_API_KEY  : zaroori

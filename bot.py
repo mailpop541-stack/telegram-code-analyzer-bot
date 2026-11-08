@@ -14,7 +14,9 @@ import io
 import os
 import logging
 import zipfile
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import PurePosixPath
+from threading import Thread
 
 from anthropic import AsyncAnthropic
 from dotenv import load_dotenv
@@ -226,11 +228,35 @@ async def handle_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE):
         await update.message.reply_text("Kuch error aaya, thodi der baad try karo.")
 
 
+def start_health_server():
+    port = int(os.getenv("PORT", "10000"))
+
+    class HealthHandler(BaseHTTPRequestHandler):
+        def do_GET(self):
+            if self.path not in ("/", "/health"):
+                self.send_error(404)
+                return
+            body = b'{"status":"ok"}\n'
+            self.send_response(200)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, fmt, *args):
+            return
+
+    server = ThreadingHTTPServer(("0.0.0.0", port), HealthHandler)
+    Thread(target=server.serve_forever, daemon=True, name="health-http").start()
+    log.info("Health endpoint listening on 0.0.0.0:%s", port)
+
+
 def main():
     app = ApplicationBuilder().token(TG_TOKEN).build()
     app.add_handler(CommandHandler(["start", "help"], start))
     app.add_handler(MessageHandler(filters.Document.ALL, handle_file))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_text))
+    start_health_server()
     log.info("Bot chalu ho gaya...")
     app.run_polling()
 
